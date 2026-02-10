@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Finance Matching Exercise</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+    padding: 20px;
+    margin: 0;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+h1 {
+    text-align: center;
+    color: #312e81;
+    font-size: 2rem;
+}
+.instructions {
+    text-align: center;
+    color: #4b5563;
+    margin-bottom: 20px;
+}
+.controls {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.score-box {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 5px;
+    font-size: 16px;
+}
+.btn-check {
+    background: #16a34a;
+    color: white;
+}
+.btn-reset {
+    background: #4f46e5;
+    color: white;
+}
+.success {
+    background: #dcfce7;
+    border: 2px solid #16a34a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #166534;
+}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+.column h2 {
+    text-align: center;
+    color: #312e81;
+    margin-bottom: 15px;
+}
+.item {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: white;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 16px;
+}
+.item:hover {
+    background: #eef2ff;
+}
+.term {
+    font-weight: bold;
+}
+.definition {
+    font-size: 14px;
+}
+.selected {
+    background: #4f46e5 !important;
+    color: white !important;
+    border-color: #312e81 !important;
+}
+.guessed {
+    background: #dbeafe !important;
+    color: #1e3a8a !important;
+    border-color: #3b82f6 !important;
+}
+.correct {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+.incorrect {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+}
+.hidden {
+    display: none;
+}
+.preview {
+    margin-left: 15px;
+    margin-top: 5px;
+    font-size: 14px;
+    color: #4b5563;
+    font-style: italic;
+}
+@media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Finance Matching Exercise</h1>
+    <div class="instructions">
+        <p>Click a term and then its matching definition</p>
+        <p style="font-size: 14px;">Select a term from the left, then click its matching definition on the right</p>
+    </div>
+    
+    <div class="controls">
+        <div class="score-box">
+            <span id="score" style="font-size: 24px; font-weight: bold; color: #4f46e5;">0</span>
+            <span id="scoreText" style="color: #6b7280;"> / 5 guessed</span>
+        </div>
+        <br>
+        <button id="checkBtn" class="btn btn-check hidden" onclick="checkAnswers()">✓ Check Answers</button>
+        <button class="btn btn-reset" onclick="reset()">↻ Reset</button>
+    </div>
+    
+    <div id="success" class="success hidden">
+        <h2>✓ Congratulations!</h2>
+        <p>You've matched all the terms correctly!</p>
+    </div>
+    
+    <div class="grid">
+        <div class="column">
+            <h2>Key Financing Terms</h2>
+            <div>
+                <button id="t1" class="item term" onclick="selectTerm(1)">Runway</button>
+                <div id="p1" class="preview hidden"></div>
+                
+                <button id="t2" class="item term" onclick="selectTerm(2)">Venture Capital</button>
+                <div id="p2" class="preview hidden"></div>
+                
+                <button id="t3" class="item term" onclick="selectTerm(3)">Convertible Notes</button>
+                <div id="p3" class="preview hidden"></div>
+                
+                <button id="t4" class="item term" onclick="selectTerm(4)">SAFE Agreements</button>
+                <div id="p4" class="preview hidden"></div>
+                
+                <button id="t5" class="item term" onclick="selectTerm(5)">Burn Rate</button>
+                <div id="p5" class="preview hidden"></div>
+            </div>
+        </div>
+        
+        <div class="column">
+            <h2>Definitions</h2>
+            <div id="defColumn">
+                <button id="d1" class="item definition" onclick="selectDef(1)">The amount of time a startup can operate before running out of cash.</button>
+                <button id="d2" class="item definition" onclick="selectDef(2)">Pooled investment funds which invest in early-stage companies with high expectations of equity positions and return on investment.</button>
+                <button id="d3" class="item definition" onclick="selectDef(3)">Short-term debt that converts into equity.</button>
+                <button id="d4" class="item definition" onclick="selectDef(4)">An investor agreement for future shares.</button>
+                <button id="d5" class="item definition" onclick="selectDef(5)">The rate at which a startup spends its cash reserves.</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var selected = 0;
+var guesses = {};
+var submitted = false;
+
+var defs = {
+    1: "The amount of time a startup can operate before running out of cash.",
+    2: "Pooled investment funds which invest in early-stage companies with high expectations of equity positions and return on investment.",
+    3: "Short-term debt that converts into equity.",
+    4: "An investor agreement for future shares.",
+    5: "The rate at which a startup spends its cash reserves."
+};
+
+function selectTerm(id) {
+    if (submitted) return;
+    
+    // Clear previous selection
+    for (var i = 1; i <= 5; i++) {
+        if (!guesses[i]) {
+            document.getElementById('t' + i).className = 'item term';
+        }
+    }
+    
+    selected = id;
+    if (!guesses[id]) {
+        document.getElementById('t' + id).className = 'item term selected';
+    }
+}
+
+function selectDef(id) {
+    if (submitted || selected === 0) return;
+    
+    guesses[selected] = id;
+    
+    // Update term button
+    document.getElementById('t' + selected).className = 'item term guessed';
+    
+    // Show preview
+    var preview = document.getElementById('p' + selected);
+    preview.innerHTML = '→ ' + defs[id];
+    preview.className = 'preview';
+    
+    // Update definition button
+    document.getElementById('d' + id).className = 'item definition guessed';
+    
+    selected = 0;
+    updateScore();
+}
+
+function updateScore() {
+    var count = 0;
+    for (var key in guesses) {
+        count++;
+    }
+    
+    document.getElementById('score').innerHTML = count;
+    
+    if (!submitted) {
+        document.getElementById('scoreText').innerHTML = ' / 5 guessed';
+        if (count === 5) {
+            document.getElementById('checkBtn').className = 'btn btn-check';
+        } else {
+            document.getElementById('checkBtn').className = 'btn btn-check hidden';
+        }
+    }
+}
+
+function checkAnswers() {
+    submitted = true;
+    var correct = 0;
+    
+    for (var termId in guesses) {
+        var defId = guesses[termId];
+        var isCorrect = (parseInt(termId) === parseInt(defId));
+        
+        var btn = document.getElementById('t' + termId);
+        var preview = document.getElementById('p' + termId);
+        preview.className = 'preview hidden';
+        
+        if (isCorrect) {
+            btn.className = 'item term correct';
+            btn.innerHTML = btn.innerHTML.replace(' ✓', '').replace(' ✗', '') + ' ✓';
+            correct++;
+        } else {
+            btn.className = 'item term incorrect';
+            btn.innerHTML = btn.innerHTML.replace(' ✓', '').replace(' ✗', '') + ' ✗';
+        }
+        btn.disabled = true;
+    }
+    
+    // Disable all definitions
+    for (var i = 1; i <= 5; i++) {
+        document.getElementById('d' + i).disabled = true;
+    }
+    
+    document.getElementById('score').innerHTML = correct;
+    document.getElementById('scoreText').innerHTML = ' / 5 correct';
+    document.getElementById('checkBtn').className = 'btn btn-check hidden';
+    
+    if (correct === 5) {
+        document.getElementById('success').className = 'success';
+    }
+}
+
+function reset() {
+    // Shuffle definitions
+    var defColumn = document.getElementById('defColumn');
+    var buttons = [];
+    for (var i = 1; i <= 5; i++) {
+        buttons.push(document.getElementById('d' + i));
+    }
+    
+    // Simple shuffle
+    for (var i = buttons.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = buttons[i];
+        buttons[i] = buttons[j];
+        buttons[j] = temp;
+    }
+    
+    defColumn.innerHTML = '';
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].className = 'item definition';
+        buttons[i].disabled = false;
+        defColumn.appendChild(buttons[i]);
+    }
+    
+    // Reset terms
+    for (var i = 1; i <= 5; i++) {
+        var btn = document.getElementById('t' + i);
+        btn.className = 'item term';
+        btn.disabled = false;
+        btn.innerHTML = btn.innerHTML.replace(' ✓', '').replace(' ✗', '');
+        document.getElementById('p' + i).className = 'preview hidden';
+    }
+    
+    // Reset state
+    selected = 0;
+    guesses = {};
+    submitted = false;
+    
+    document.getElementById('score').innerHTML = '0';
+    document.getElementById('scoreText').innerHTML = ' / 5 guessed';
+    document.getElementById('checkBtn').className = 'btn btn-check hidden';
+    document.getElementById('success').className = 'success hidden';
+}
+</script>
+
+</body>
+</html>
